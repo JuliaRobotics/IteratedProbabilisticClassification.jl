@@ -11,15 +11,18 @@ export
 	ClassificationSystem,
 	TuningParameters,
 	ClassificationStats,
+	defaultClassificationStats,
 	classifyOneStep,
 	classifyConverge,
 	plotClassification1D,
 	plotClassificationStats,
 	plotPopulationFraction,
 	packDebugResults!,
+	EMClassificationRun!,
 
 	# functions under development
 	sdc2,
+	plotUtil1D,
 	# batchClassifyConverge
 
 	# previous code
@@ -32,9 +35,18 @@ export
 	PALETTE
 
 
-include("ClassificationUtilities.jl")
-
 PALETTE = ["deepskyblue";"red";"magenta";"black";"green";"blue"]
+
+
+typealias VoidUnion{T} Union{Void, T}
+
+
+include("ClassificationUtilities.jl")
+include("PlottingUtilities.jl")
+include("SimulationData.jl")
+
+
+
 
 function plotMarginalClassificationBelief()
 	pl_init = plotKDE([c1_expert,c2_expert],c=PALETTE)
@@ -44,7 +56,7 @@ function plotMarginalClassificationBelief()
 	push!(pl_init.layers, lyr_smpls_trueB[1])
 
 	#Gadfly.draw(PDF("InitialClusterDist.pdf",20cm,12cm),pl_init)
-
+	error("Incomplete function")
 end
 
 function plotClassification1D(
@@ -64,9 +76,18 @@ function plotClassification1D(
 			push!(PL, pl)
 		end
 
+		error("Incomplete function")
 
 		nothing
 end
+
+
+
+
+
+
+
+
 
 
 

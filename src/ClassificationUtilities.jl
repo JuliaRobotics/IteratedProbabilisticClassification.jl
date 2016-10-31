@@ -7,24 +7,19 @@ type TuningParameters
 end
 
 type ClassificationSystem
-  classlabels::Dict{Int, UTF8String}
-  expertBelief::Dict{UTF8String, BallTreeDensity}
-  temporalBelief::Dict{UTF8String, BallTreeDensity}
-  currentBelief::Dict{UTF8String, BallTreeDensity}
+  numCategories::Int
+  categoryLabels::Dict{Int, UTF8String}
+  colors::Dict{Int, ASCIIString}
+  expertBelief::Dict{Int, BallTreeDensity}
+  temporalBelief::Dict{Int, BallTreeDensity}
+  currentBelief::Dict{Int, BallTreeDensity}
   assignment::Vector{Int}
 end
 
-# type SimData
-#   samples::Array{Float64,2}
-#   clustersizes::Dict{Int,Int}
-#   clusters::Dict{Int,Array{Float64,2}}
-#   plt_lyr_cluster::Dict{Int, Any}
-#   plt_lyr_cluster_nocolor::Dict{Int, Any}
-#   SimData() = new(zeros(0,2),  Dict{Int,Int}(),  Dict{Int,Array{Float64,2}}(),  Dict{Int,Any}(),  Dict{Int,Any}() )
-#   SimData(x...) = new(x[1],x[2],x[3],x[4],x[5])
-# end
 type SampleData
   samples::Array{Float64,2}
+  measurementDims::Int
+  numSamples::Int
 end
 
 type DataGroundTruth
@@ -70,109 +65,16 @@ type ClassificationStats
   ClassificationStats() = new(zeros(0,0),
                               Dict{Int, Vector{BallTreeDensity}}()   )
 end
-
-
-Nor(x;m=0.0,s=1.0) = 1.0/sqrt(2*pi)/s * exp( -0.5/(s^2)*(x-m)^2 )
-Nor2(x;m1=0.0,m2=0.0,s=1.0) = 0.7/sqrt(2*pi)/s * exp( -0.5/(s^2)*(x-m1)^2 ) + 0.3/sqrt(2*pi)/s * exp( -0.5/(s^2)*(x-m2)^2 )
-function simdata01_true(;N1=100,N2=100)
-  # common struct to hold all simulated data
-  data = DataGroundTruth()
-  samples = SampleData(zeros(0,0))
-
-  temp1 = (randn(round(Int,0.7*N1))-1.0)
-  cluster1 = ([temp1; randn(N1-length(temp1))-5.0]')
-  cluster2 = randn(1,N2)+1
-
-  data.clusters[1] = cluster1
-  data.clustersizes[1] = N1
-  data.clusters[2] = cluster2
-  data.clustersizes[2] = N2
-  # one dimensional, Array{Float64,1}, with N1+N2 elements [vector alias]
-  sd = [cluster1';cluster2']'
-  permu = randperm(N1+N2)
-  samples.samples = sd[:,permu]
-
-
-y = randn(10)
-
-  data.assignment = ([ones(Int,N1);2*ones(Int,N2)])[permu]
-
-  # [OPTIONAL] going to carry plot layers for convenience also
-  drawN = 200
-  pts1 = StatsBase.sample(cluster1[1,:][:], WeightVec(1.0/N1*ones(N1)), drawN, replace=false)
-  yy1 = zeros(drawN)
-  for i in 1:drawN  yy1[i] = Nor2(pts1[i],m1=-1.0,m2=-5.0) end
-  data.plt_lyr_cluster[1] = layer(x=pts1, y=yy1, Geom.line, Theme(default_color=colorant"blue"))[1] #parse(Colorant,"red")
-  data.plt_lyr_cluster_nocolor[1] = layer(x=pts1, y=yy1, Geom.line, Theme(default_color=colorant"gray"))[1] #parse(Colorant,"red")
-
-  pts2 = StatsBase.sample(cluster2[1,:][:], WeightVec(1.0/N2*ones(N2)), drawN, replace=false)
-  yy2 = zeros(drawN)
-  for i in 1:drawN  yy2[i] = Nor(pts2[i],m=+1.0) end
-  data.plt_lyr_cluster[2] = layer(x=pts2, y=yy2, Geom.line, Theme(default_color=colorant"red"))[1] #parse(Colorant,"red")
-  data.plt_lyr_cluster_nocolor[2] = layer(x=pts2, y=yy2, Geom.line, Theme(default_color=colorant"gray"))[1] #parse(Colorant,"red")
-
-  return samples, data
+function defaultClassificationStats(params::TuningParameters, cs::ClassificationSystem)
+  stats = ClassificationStats()
+  for clbl in cs.categoryLabels
+    stats.ESTBELIEF[clbl[1]] = BallTreeDensity[]
+  end
+  stats.POPFRAC = zeros(cs.numCategories,params.EMiters) #Array{Float64,2}()
+  stats
 end
 
 
-# two dimensional example
-function simdata02_true(;N1=100,N2=100)
-  # common struct to hold all simulated data
-  data = SimData()
-
-  cluster1 = rand(MvNormal([3.0;3.0],[[2.5;-1.5]';[-1.5;2.5]']),N1)
-  cluster2 = rand(MvNormal([-2.0;-2.0],[[4.0;3.0]';[3.0;4.0]']),N2)
-
-  data.clusters[1] = cluster1
-  data.clustersizes[1] = N1
-  data.clusters[2] = cluster2
-  data.clustersizes[2] = N2
-  # two rows, N1+N2 columns (Array{Float64,2})
-  data.samples = [cluster1';cluster2']'
-
-  data.plt_lyr_cluster[1] = layer(x=cluster1[1,:], y=cluster1[2,:], Geom.point, Theme(default_color=colorant"blue"))
-  data.plt_lyr_cluster_nocolor[1] = layer(x=cluster1[1,:], y=cluster1[2,:], Geom.point, Theme(default_color=colorant"gray"))
-  data.plt_lyr_cluster[2] = layer(x=cluster2[1,:], y=cluster2[2,:], Geom.point, Theme(default_color=colorant"red"))
-  data.plt_lyr_cluster_nocolor[2] = layer(x=cluster2[1,:], y=cluster2[2,:], Geom.point, Theme(default_color=colorant"gray"))
-
-  return data
-end
-
-function plotPopulationFraction(params, stats)
-  plot(
-  layer(x=1:params.EMiters, y=stats.POPFRAC[1,:], Geom.line, Theme(default_color=colorant"blue" )),
-  layer(x=1:params.EMiters, y=stats.POPFRAC[2,:], Geom.line, Theme(default_color=colorant"red"  )),
-  # layer(x=1:params.EMiters, y=abs(dbg.INDV_MISASSIGN_C[1] - dbg.INDV_MISASSIGN_C[2]), Geom.line, Theme(default_color=colorant"magenta"  )),
-  Guide.title("Population fraction estimates"),
-  Guide.ylabel("%")
-  )
-end
-
-function plotClassificationStats(params, dbg)
-  pl_accur = plot(
-  layer(x=1:params.EMiters, y=dbg.ACCUR_C[1], Geom.line, Theme(default_color=colorant"blue" )),
-  layer(x=1:params.EMiters, y=dbg.ACCUR_C[2], Geom.line, Theme(default_color=colorant"red"  )),
-  Guide.title("Absolute percentage error in sample count among classifications"),
-  Guide.ylabel("%")
-  );
-
-  pl_rel_accur = plot(
-  layer(x=1:params.EMiters, y=dbg.REL_ACCUR_C[1], Geom.line, Theme(default_color=colorant"blue" )),
-  layer(x=1:params.EMiters, y=dbg.REL_ACCUR_C[2], Geom.line, Theme(default_color=colorant"red"  )),
-  Guide.title("Relative percentage error in sample count among classifications"),
-  Guide.ylabel("%")
-  );
-
-  pl_indvmissassign = plot(
-  layer(x=1:params.EMiters, y=dbg.INDV_MISASSIGN_C[1], Geom.line, Theme(default_color=colorant"blue" )),
-  layer(x=1:params.EMiters, y=dbg.INDV_MISASSIGN_C[2], Geom.line, Theme(default_color=colorant"red"  )),
-  # layer(x=1:params.EMiters, y=abs(dbg.INDV_MISASSIGN_C[1] - dbg.INDV_MISASSIGN_C[2]), Geom.line, Theme(default_color=colorant"magenta"  )),
-  Guide.title("Common percentage error count among classifications (unweighted)"),
-  Guide.ylabel("%")
-  );
-
-  vstack(pl_accur, pl_rel_accur, pl_indvmissassign)
-end
 
 # attempt at balancing populations of different size (non-textbook, there is no textbook)
 # using Dirichlet distribution as conjugate prior of categorical distribution
@@ -199,16 +101,73 @@ function packDebugResults!(dbg::DebugResults, assigned, GT)
 
   push!(dbg.INDV_MISASSIGN_C[1], 100*abs(sum(assigned .== 1)-GT.clustersizes[1])/(GT.clustersizes[1]+0.0) )
   push!(dbg.INDV_MISASSIGN_C[2], 100*abs(sum(assigned .== 2)-GT.clustersizes[2])/(GT.clustersizes[2]+0.0) )
-  # push!(dbg.INDV_MISASSIGN_C[1], 100*abs(sum(assigned[1:GT.clustersizes[1]] .== 1)-GT.clustersizes[1])/(GT.clustersizes[1]+0.0)  )
-  # push!(dbg.INDV_MISASSIGN_C[2], 100*abs(sum(assigned[(GT.clustersizes[1]+1):(GT.clustersizes[1]+GT.clustersizes[2])] .== 2)-GT.clustersizes[2])/(GT.clustersizes[2]+0.0))
+
+  push!(dbg.ASSIGNED, assigned)
 
   nothing
 end
 
 
 
+function EMClassificationRun!(
+      params::TuningParameters,
+      cs::ClassificationSystem,
+      data::SampleData;
+      debug::VoidUnion{DebugResults}=nothing,
+      groundtruth::VoidUnion{DataGroundTruth}=nothing )
 
+  # allocate some common variables
+  stats = defaultClassificationStats(params, cs)
+  idxs = collect(1:data.numSamples)
+  weights = zeros(cs.numCategories, data.numSamples)
 
+  ### [1.0] Classification algorithm part 1 of 2 -- the measurement, generalized expectation maximization (EM) type procedure
+  # [1.1] loop over cluster assignment sample drawing process
+  for m in 1:params.EMiters # EM iterations per measurement cycle, this is a tuning parameter -> more iterations should assymptote to true assignment distribution
+    # [1.2] numerically approximate a Bayesian prior -- (interpret as Dirichlet sampling process with some implicit concentration parameter)
+
+    # find the joint distribution using expert biasing, EM measurement iteration (HMM prediction not shown in this example yet)
+    if m>1  for clbl in cs.categoryLabels
+      cs.currentBelief[clbl[1]] = cs.currentBelief[clbl[1]] * cs.expertBelief[clbl[1]]
+    end end
+
+    # evaluate the point likelihood of being in each cluster
+    for i in 1:cs.numCategories
+      weights[i,:] = evaluateDualTree(cs.currentBelief[i], data.samples)
+    end
+
+    # [1.3] assign cluster as sampling from categorical distribution
+    popFrac = [sum(cs.assignment .== 1); sum(cs.assignment .== 2)]/(data.numSamples+0.0)
+    stats.POPFRAC[:,m] = popFrac'
+    for i in 1:data.numSamples
+      p = vec(weights[:,i])
+      p = p/sum(p) # renormalize to valid probability distribution
+      sel = false ?   rand( Categorical( p ) )   :   round(Int,sdc2(popFrac, p))
+          cs.assignment[i] =  sel
+    end
+
+    # build new intermediate cluster density estimates
+    # but subsample to fair chance and practically computable sets first
+    clusters = Dict{Int, Array{Float64,2}}()
+    subSampledClusters = Dict{Int, Array{Float64,2}}()
+    for clbl in cs.categoryLabels
+      clusters[clbl[1]] = data.samples[:,cs.assignment .== clbl[1]]
+      len = size(clusters[clbl[1]],2)
+
+      useidx = StatsBase.sample(idxs[1:size(clusters[clbl[1]],2)], WeightVec(1.0/len*ones(len)), params.Mfair, replace=false)
+      subSampledClusters[clbl[1]] = clusters[clbl[1]][:,useidx]
+
+      cs.currentBelief[clbl[1]] = kde!(subSampledClusters[clbl[1]])
+      push!(stats.ESTBELIEF[clbl[1]], deepcopy(cs.currentBelief[clbl[1]]))
+    end
+
+    # measure classification accuracy
+    if debug != nothing && groundtruth != nothing
+      packDebugResults!(debug, cs.assignment, groundtruth)
+    end
+  end
+  stats
+end
 
 
 
