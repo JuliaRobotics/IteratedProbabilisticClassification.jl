@@ -59,7 +59,7 @@ function plotUtil1D(;
 
 		PL = cs == nothing ? PL : union(PL, layersExpertBelief1D(cs, colors=expertcolor))
 
-		PL = cs == nothing && !drawcurrent ? PL : union(PL, layersCurrentBelief1D(cs, colors=currentcolor))
+		PL = (cs == nothing || !drawcurrent) ? PL : union(PL, layersCurrentBelief1D(cs, colors=currentcolor))
 
 		# layer(x=data.samples,y=zeros(size(data.samples)),Geom.point,Theme(default_color=colorant"gray")),
 
