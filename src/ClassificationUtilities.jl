@@ -61,13 +61,16 @@ end
 
 type ClassificationStats
   POPFRAC::Array{Float64,2}
+  SEQKLDIVERG::Dict{Int, Vector{Float64}}
   ESTBELIEF::Dict{Int, Vector{BallTreeDensity}}
   ClassificationStats() = new(zeros(0,0),
+                              Dict{Int, Vector{Float64}}(),
                               Dict{Int, Vector{BallTreeDensity}}()   )
 end
 function defaultClassificationStats(params::TuningParameters, cs::ClassificationSystem)
   stats = ClassificationStats()
   for clbl in cs.categoryLabels
+    stats.SEQKLDIVERG[clbl[1]] = Float64[]
     stats.ESTBELIEF[clbl[1]] = BallTreeDensity[]
   end
   stats.POPFRAC = zeros(cs.numCategories,params.EMiters) #Array{Float64,2}()
@@ -82,7 +85,7 @@ end
 # b is current likelihood estimate of being classified label length(b), and should ==length(a); sum(b) = 1, b.>=0
 # yes, function needs a better name
 function sdc2(a,b)
-  aa = a+0.7*abs(maximum(a)-minimum(a))#1#./maximum(a)
+  aa = a+0.6*abs(maximum(a)-minimum(a))#1#./maximum(a)
   p = rand(Dirichlet(aa))
   pp = p.*b
   pp /= sum(pp)
@@ -143,7 +146,7 @@ function EMClassificationRun!(
       p = vec(weights[:,i])
       p = p/sum(p) # renormalize to valid probability distribution
       sel = false ?   rand( Categorical( p ) )   :   round(Int,sdc2(popFrac, p))
-          cs.assignment[i] =  sel
+      cs.assignment[i] =  sel
     end
 
     # build new intermediate cluster density estimates
@@ -157,7 +160,10 @@ function EMClassificationRun!(
       useidx = StatsBase.sample(idxs[1:size(clusters[clbl[1]],2)], WeightVec(1.0/len*ones(len)), params.Mfair, replace=false)
       subSampledClusters[clbl[1]] = clusters[clbl[1]][:,useidx]
 
-      cs.currentBelief[clbl[1]] = kde!(subSampledClusters[clbl[1]])
+      newBel = kde!(subSampledClusters[clbl[1]])
+      diverg = kld(newBel, cs.currentBelief[clbl[1]])[1]
+      cs.currentBelief[clbl[1]] = newBel
+      push!(stats.SEQKLDIVERG[clbl[1]], diverg)
       push!(stats.ESTBELIEF[clbl[1]], deepcopy(cs.currentBelief[clbl[1]]))
     end
 
@@ -173,8 +179,14 @@ end
 
 
 
-
-
+function dispersePoints(X::Array{Float64,2}, dispersion)
+  r, c = size(X)
+  Y = zeros(r,c)
+  for i in 1:c
+    Y[:,i] = X[:,i] + rand(dispersion)
+  end
+  return Y
+end
 
 
 

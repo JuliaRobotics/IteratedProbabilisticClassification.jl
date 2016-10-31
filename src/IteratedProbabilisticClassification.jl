@@ -16,9 +16,10 @@ export
 	classifyConverge,
 	plotClassification1D,
 	plotClassificationStats,
-	plotPopulationFraction,
+	plotEMStatus,
 	packDebugResults!,
 	EMClassificationRun!,
+	dispersePoints,
 
 	# functions under development
 	sdc2,
