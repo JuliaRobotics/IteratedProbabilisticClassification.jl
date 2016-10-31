@@ -10,10 +10,13 @@ export
 	# Major types and functions used for classification
 	ClassificationSystem,
 	TuningParameters,
+	ClassificationStats,
 	classifyOneStep,
 	classifyConverge,
 	plotClassification1D,
 	plotClassificationStats,
+	plotPopulationFraction,
+	packDebugResults!,
 
 	# functions under development
 	sdc2,
@@ -23,7 +26,9 @@ export
 	simdata01_true,
 	simdata02_true,
 	DebugResults,
-	SimData,
+	defaultDebugResults,
+	DataGroundTruth,
+	SampleData,
 	PALETTE
 
 
