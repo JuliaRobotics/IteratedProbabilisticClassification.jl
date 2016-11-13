@@ -24,6 +24,7 @@ export
 	# functions under development
 	sdc2,
 	plotUtil1D,
+	plotUtil2D,
 	# batchClassifyConverge
 
 	# previous code

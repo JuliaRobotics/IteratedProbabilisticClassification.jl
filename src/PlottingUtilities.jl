@@ -8,7 +8,39 @@ function layersGroundTruth1D(gt::DataGroundTruth)
 	PL
 end
 
+function layersGroundTruth2D(id::Int, gt::DataGroundTruth)
+	PL = Gadfly.Context[]
+	PL = union(PL, gt.plt_lyr_cluster[id])
+	PL
+end
+function layersGroundTruth2D(ids::Vector{Int}, gt::DataGroundTruth)
+	PL = Gadfly.Context[]
+	for id in ids
+		PL = union(PL, gt.plt_lyr_cluster[id])
+	end
+	PL
+end
+
+
 function layersExpertBelief1D(cs::ClassificationSystem;
+															margdim=1,
+															colors::VoidUnion{Dict{Int, ASCIIString}}=nothing )
+	# use defaults
+	colors = colors == nothing ? cs.colors : colors
+
+  # prep data
+	pr, cl = BallTreeDensity[], ASCIIString[]
+	for p in cs.expertBelief
+		push!(pr, marginal(p[2],[margdim]))
+		push!(cl, colors[p[1]]) # get accompanying color
+	end
+
+	# plot and return layers
+	pl_init = plotKDE(pr,c=cl);
+	pl_init.layers
+end
+
+function layersExpertBelief2D(id::Int, cs::ClassificationSystem;
 															margdim=1,
 															colors::VoidUnion{Dict{Int, ASCIIString}}=nothing )
 	# use defaults
@@ -67,6 +99,25 @@ function plotUtil1D(;
 end
 
 
+function plotUtil2D(id::Union{Int, Vector{Int}};
+		sampledata::VoidUnion{SampleData}=nothing,
+		groundtruth::VoidUnion{DataGroundTruth}=nothing,
+		cs::VoidUnion{ClassificationSystem}=nothing,
+		expertcolor::VoidUnion{Dict{Int,ASCIIString}}=nothing,
+		drawcurrent::Bool=false,
+		currentcolor::VoidUnion{Dict{Int,ASCIIString}}=nothing
+		)
+
+		PL = []
+		PL = groundtruth == nothing ? PL : union(PL, layersGroundTruth2D(id, groundtruth))
+		# push!(PL, Guide.title("True classification for intersecting clusters in 1 dimension"))
+
+		PL = cs == nothing ? PL : union(PL, layersExpertBelief2D(id, cs, colors=expertcolor))
+		#
+		# PL = (cs == nothing || !drawcurrent) ? PL : union(PL, layersCurrentBelief1D(cs, colors=currentcolor))
+
+		plot(PL...)
+end
 
 
 
