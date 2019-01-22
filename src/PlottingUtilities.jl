@@ -24,12 +24,12 @@ end
 
 function layersExpertBelief1D(cs::ClassificationSystem;
 															margdim=1,
-															colors::VoidUnion{Dict{Int, ASCIIString}}=nothing )
+															colors::NothingUnion{Dict{Int, String}}=nothing )
 	# use defaults
 	colors = colors == nothing ? cs.colors : colors
 
   # prep data
-	pr, cl = BallTreeDensity[], ASCIIString[]
+	pr, cl = BallTreeDensity[], String[]
 	for p in cs.expertBelief
 		push!(pr, marginal(p[2],[margdim]))
 		push!(cl, colors[p[1]]) # get accompanying color
@@ -42,12 +42,12 @@ end
 
 function layersExpertBelief2D(id::Int, cs::ClassificationSystem;
 															margdim=1,
-															colors::VoidUnion{Dict{Int, ASCIIString}}=nothing )
+															colors::NothingUnion{Dict{Int, String}}=nothing )
 	# use defaults
 	colors = colors == nothing ? cs.colors : colors
 
   # prep data
-	pr, cl = BallTreeDensity[], ASCIIString[]
+	pr, cl = BallTreeDensity[], String[]
 	for p in cs.expertBelief
 		push!(pr, marginal(p[2],[margdim]))
 		push!(cl, colors[p[1]]) # get accompanying color
@@ -60,12 +60,12 @@ end
 
 function layersCurrentBelief1D(cs::ClassificationSystem;
 															margdim=1,
-															colors::VoidUnion{Dict{Int, ASCIIString}}=nothing )
+															colors::NothingUnion{Dict{Int, String}}=nothing )
 	# use defaults
 	colors = colors == nothing ? cs.colors : colors
 
   # prep data
-	pr, cl = BallTreeDensity[], ASCIIString[]
+	pr, cl = BallTreeDensity[], String[]
 	for p in cs.currentBelief
 		push!(pr, marginal(p[2],[margdim]))
 		push!(cl, colors[p[1]]) # get accompanying color
@@ -77,12 +77,12 @@ function layersCurrentBelief1D(cs::ClassificationSystem;
 end
 
 function plotUtil1D(;
-		sampledata::VoidUnion{SampleData}=nothing,
-		groundtruth::VoidUnion{DataGroundTruth}=nothing,
-		cs::VoidUnion{ClassificationSystem}=nothing,
-		expertcolor::VoidUnion{Dict{Int,ASCIIString}}=nothing,
+		sampledata::NothingUnion{SampleData}=nothing,
+		groundtruth::NothingUnion{DataGroundTruth}=nothing,
+		cs::NothingUnion{ClassificationSystem}=nothing,
+		expertcolor::NothingUnion{Dict{Int,String}}=nothing,
 		drawcurrent::Bool=false,
-		currentcolor::VoidUnion{Dict{Int,ASCIIString}}=nothing
+		currentcolor::NothingUnion{Dict{Int,String}}=nothing
 		)
 
 		PL = []
@@ -100,12 +100,12 @@ end
 
 
 function plotUtil2D(id::Union{Int, Vector{Int}};
-		sampledata::VoidUnion{SampleData}=nothing,
-		groundtruth::VoidUnion{DataGroundTruth}=nothing,
-		cs::VoidUnion{ClassificationSystem}=nothing,
-		expertcolor::VoidUnion{Dict{Int,ASCIIString}}=nothing,
+		sampledata::NothingUnion{SampleData}=nothing,
+		groundtruth::NothingUnion{DataGroundTruth}=nothing,
+		cs::NothingUnion{ClassificationSystem}=nothing,
+		expertcolor::NothingUnion{Dict{Int,String}}=nothing,
 		drawcurrent::Bool=false,
-		currentcolor::VoidUnion{Dict{Int,ASCIIString}}=nothing
+		currentcolor::NothingUnion{Dict{Int,String}}=nothing
 		)
 
 		PL = []

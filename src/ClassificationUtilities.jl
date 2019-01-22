@@ -1,28 +1,28 @@
 # debugging and plotting utilities for classification
 
-type TuningParameters
+mutable struct TuningParameters
   Mfair::Int # Cluster distribution approximation accuracy, more is better, computation becomes prohibative beyond ~1000
   EMiters::Int # expectation maximization iterations to refine Cluster distribution density estimate and sample classification, diminishing returns beyond ~30
   TuningParameters(;Mfair=200, EMiters=30) = new(Mfair, EMiters)
 end
 
-type ClassificationSystem
+mutable struct ClassificationSystem
   numCategories::Int
-  categoryLabels::Dict{Int, UTF8String}
-  colors::Dict{Int, ASCIIString}
+  categoryLabels::Dict{Int, String}
+  colors::Dict{Int, String}
   expertBelief::Dict{Int, BallTreeDensity}
   temporalBelief::Dict{Int, BallTreeDensity}
   currentBelief::Dict{Int, BallTreeDensity}
   assignment::Vector{Int}
 end
 
-type SampleData
+mutable struct SampleData
   samples::Array{Float64,2}
   measurementDims::Int
   numSamples::Int
 end
 
-type DataGroundTruth
+mutable struct DataGroundTruth
   assignment::Array{Int,1}
   clustersizes::Dict{Int,Int}
   clusters::Dict{Int,Array{Float64,2}}
@@ -33,7 +33,7 @@ type DataGroundTruth
 end
 
 # Common struct to store debug information during running of the algorithm
-type DebugResults
+mutable struct DebugResults
   ASSIGNED::Array{Array{Int,1},1}
   PL_MEAS::Array{Any,1}
   ACCUR_C::Dict{Int,Array{Float64,1}}
@@ -59,7 +59,7 @@ function defaultDebugResults()
   return dbg
 end
 
-type ClassificationStats
+mutable struct ClassificationStats
   POPFRAC::Array{Float64,2}
   SEQKLDIVERG::Dict{Int, Vector{Float64}}
   ESTBELIEF::Dict{Int, Vector{BallTreeDensity}}
@@ -85,7 +85,7 @@ end
 # b is current likelihood estimate of being classified label length(b), and should ==length(a); sum(b) = 1, b.>=0
 # yes, function needs a better name
 function sdc2(a,b)
-  aa = a+0.6*abs(maximum(a)-minimum(a))#1#./maximum(a)
+  aa = a.+0.6*abs(maximum(a)-minimum(a))#1#./maximum(a)
   p = rand(Dirichlet(aa))
   pp = p.*b
   pp /= sum(pp)
@@ -116,20 +116,20 @@ function EMClassificationRun!(
       params::TuningParameters,
       cs::ClassificationSystem,
       data::SampleData;
-      debug::VoidUnion{DebugResults}=nothing,
-      groundtruth::VoidUnion{DataGroundTruth}=nothing )
+      debug::NothingUnion{DebugResults}=nothing,
+      groundtruth::NothingUnion{DataGroundTruth}=nothing )
 
   # allocate some common variables
   stats = defaultClassificationStats(params, cs)
   idxs = collect(1:data.numSamples)
   weights = zeros(cs.numCategories, data.numSamples)
 
-  ### [1.0] Classification algorithm part 1 of 2 -- the measurement, generalized expectation maximization (EM) type procedure
+  ### [1.0] Classification algorithm part 1 of 2 -- the measurement, generalized expectation maximization (EM) procedure
   # [1.1] loop over cluster assignment sample drawing process
   for m in 1:params.EMiters # EM iterations per measurement cycle, this is a tuning parameter -> more iterations should assymptote to true assignment distribution
     # [1.2] numerically approximate a Bayesian prior -- (interpret as Dirichlet sampling process with some implicit concentration parameter)
 
-    # find the joint distribution using expert biasing, EM measurement iteration (HMM prediction not shown in this example yet)
+    # find the joint distribution using expert prior, EM measurement iteration (HMM prediction not shown in this example yet)
     if m>1  for clbl in cs.categoryLabels
       cs.currentBelief[clbl[1]] = cs.currentBelief[clbl[1]] * cs.expertBelief[clbl[1]]
     end end
@@ -154,7 +154,9 @@ function EMClassificationRun!(
     clusters = Dict{Int, Array{Float64,2}}()
     subSampledClusters = Dict{Int, Array{Float64,2}}()
     for clbl in cs.categoryLabels
-      clusters[clbl[1]] = data.samples[:,cs.assignment .== clbl[1]]
+      msk = cs.assignment .== clbl[1]
+      @show size(msk), size(data.samples)
+      clusters[clbl[1]] = data.samples[:, msk ]
       len = size(clusters[clbl[1]],2)
 
       useidx = StatsBase.sample(idxs[1:size(clusters[clbl[1]],2)], WeightVec(1.0/len*ones(len)), params.Mfair, replace=false)

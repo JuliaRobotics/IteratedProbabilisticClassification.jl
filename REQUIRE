@@ -1,5 +1,6 @@
-julia
+julia 0.7
 KernelDensityEstimate
 Distributions
 StatsBase
 Gadfly
+KernelDensityEstimatePlotting

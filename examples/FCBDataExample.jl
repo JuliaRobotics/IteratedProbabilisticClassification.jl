@@ -2,6 +2,9 @@
 
 ## Loading FCB test data
 
+# must be imported first to avoid unrelated libz error
+using ImageMagick
+
 using HDF5, MAT
 
 datadir = joinpath(ENV["HOME"], "data", "fcb")
@@ -25,7 +28,6 @@ close(file)
 
 
 ## Basic plotting of data
-
 using Makie
 
 # don't open a separate Makie plot window -- use atom plot pane instead

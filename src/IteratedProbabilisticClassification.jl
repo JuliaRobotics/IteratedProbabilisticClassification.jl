@@ -4,7 +4,10 @@ using
 	KernelDensityEstimate,
 	Distributions,
 	StatsBase,
-	Gadfly
+	Random,
+	Gadfly,
+	KernelDensityEstimatePlotting,
+    Statistics
 
 export
 	# Major types and functions used for classification
@@ -40,7 +43,7 @@ export
 PALETTE = ["deepskyblue";"red";"magenta";"black";"green";"blue"]
 
 
-typealias VoidUnion{T} Union{Void, T}
+const NothingUnion{T} = Union{Nothing, T}
 
 
 include("ClassificationUtilities.jl")
