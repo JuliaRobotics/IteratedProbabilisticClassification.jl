@@ -135,8 +135,8 @@ function plotEMStatus(params, stats)
   )
 
 	plkl = plot(
-	layer(x=1:params.EMiters, y=abs(stats.SEQKLDIVERG[1][:]), Geom.line, Theme(default_color=colorant"blue" )),
-	layer(x=1:params.EMiters, y=abs(stats.SEQKLDIVERG[2][:]), Geom.line, Theme(default_color=colorant"red"  )),
+	layer(x=1:params.EMiters, y=abs.(stats.SEQKLDIVERG[1][:]), Geom.line, Theme(default_color=colorant"blue" )),
+	layer(x=1:params.EMiters, y=abs.(stats.SEQKLDIVERG[2][:]), Geom.line, Theme(default_color=colorant"red"  )),
 	# layer(x=1:params.EMiters, y=abs(dbg.INDV_MISASSIGN_C[1] - dbg.INDV_MISASSIGN_C[2]), Geom.line, Theme(default_color=colorant"magenta"  )),
 	Guide.title("Abs sequential KL divergence, | D(p_{k+1} || p_{k}) |"),
 	)

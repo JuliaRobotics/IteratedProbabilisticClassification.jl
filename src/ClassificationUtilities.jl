@@ -159,7 +159,7 @@ function EMClassificationRun!(
       clusters[clbl[1]] = data.samples[:, msk ]
       len = size(clusters[clbl[1]],2)
 
-      useidx = StatsBase.sample(idxs[1:size(clusters[clbl[1]],2)], WeightVec(1.0/len*ones(len)), params.Mfair, replace=false)
+      useidx = StatsBase.sample(idxs[1:size(clusters[clbl[1]],2)], ProbabilityWeights(1.0/len*ones(len)), params.Mfair, replace=false)
       subSampledClusters[clbl[1]] = clusters[clbl[1]][:,useidx]
 
       newBel = kde!(subSampledClusters[clbl[1]])

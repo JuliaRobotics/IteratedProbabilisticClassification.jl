@@ -6,9 +6,9 @@ function simdata01_true(;N1=100,N2=100)
   data = DataGroundTruth()
   samples = SampleData(zeros(0,0), 1, N1+N2)
 
-  temp1 = (randn(round(Int,0.7*N1))-1.0)
-  cluster1 = ([temp1; randn(N1-length(temp1))-5.0]')
-  cluster2 = randn(1,N2)+1
+  temp1 = (randn(round(Int,0.7*N1)).-1.0)
+  cluster1 = ([temp1; randn(N1-length(temp1)).-5.0]')
+  cluster2 = randn(1,N2).+1
 
   data.clusters[1] = cluster1
   data.clustersizes[1] = N1
@@ -26,13 +26,13 @@ y = randn(10)
 
   # [OPTIONAL] going to carry plot layers for convenience also
   drawN = 200
-  pts1 = StatsBase.sample(cluster1[1,:][:], WeightVec(1.0/N1*ones(N1)), drawN, replace=false)
+  pts1 = StatsBase.sample(cluster1[1,:][:], ProbabilityWeights(1.0/N1*ones(N1)), drawN, replace=false)
   yy1 = zeros(drawN)
   for i in 1:drawN  yy1[i] = Nor2(pts1[i],m1=-1.0,m2=-5.0) end
   data.plt_lyr_cluster[1] = layer(x=pts1, y=yy1, Geom.line, Theme(default_color=colorant"blue"))[1] #parse(Colorant,"red")
   data.plt_lyr_cluster_nocolor[1] = layer(x=pts1, y=yy1, Geom.line, Theme(default_color=colorant"gray"))[1] #parse(Colorant,"red")
 
-  pts2 = StatsBase.sample(cluster2[1,:][:], WeightVec(1.0/N2*ones(N2)), drawN, replace=false)
+  pts2 = StatsBase.sample(cluster2[1,:][:], ProbabilityWeights(1.0/N2*ones(N2)), drawN, replace=false)
   yy2 = zeros(drawN)
   for i in 1:drawN  yy2[i] = Nor(pts2[i],m=+1.0) end
   data.plt_lyr_cluster[2] = layer(x=pts2, y=yy2, Geom.line, Theme(default_color=colorant"red"))[1] #parse(Colorant,"red")
