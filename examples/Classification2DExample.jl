@@ -90,7 +90,7 @@ sum(cs.assignment .== 1), sum(cs.assignment .== 2)
 
 Gadfly.set_default_plot_size(20cm, 10cm)
 plot(
-layer(x=data.samples[1,cs.assignment .== 2], Geom.histogram,Theme(default_color=colorant"red")),
+layer(x=data.samples[1,cs.assignment .== 2], Geom.histogram, Theme(default_color=colorant"red")),
 layer(x=data.samples[1,cs.assignment .== 1], Geom.histogram)
 )
 
