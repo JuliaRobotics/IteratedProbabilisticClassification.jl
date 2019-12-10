@@ -1,4 +1,6 @@
-# IteratedProbabilisticClassification.jl
+## KernelExpectationMaximization.jl
+
+> Previously called **IteratedProbabilisticClassification.jl**
 
 Kernel Density Estimate generalized Expectation Maximization Classification
 
